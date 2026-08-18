@@ -22,6 +22,7 @@ Execute the C Program for the desired output.
 
 ## C program that receives a message from message queue and display them
 ## SERVER;
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -81,8 +82,9 @@ int main()
 
     return 0;
 }
+```
 ## CLIENT;
-
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -128,7 +130,7 @@ int main()
 
     return 0;
 }
-
+```
 ## OUTPUT
 
 ## server;
