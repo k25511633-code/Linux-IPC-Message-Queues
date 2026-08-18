@@ -28,7 +28,8 @@ Execute the C Program for the desired output.
 #include <sys/msg.h>
 #include <string.h>
 
-struct message {
+struct message
+{
     long msg_type;
     char msg_text[100];
 };
@@ -41,7 +42,8 @@ int main()
 
     // Generate a key
     key = ftok("server.c", 65);
-// Create message queue
+
+    // Create message queue
     msgid = msgget(key, 0666 | IPC_CREAT);
 
     if (msgid == -1)
@@ -54,14 +56,23 @@ int main()
     printf("Waiting for message from client...\n");
 
     // Receive message
-    msgrcv(msgid, &msg, sizeof(msg.msg_text), 1, 0);
+    if (msgrcv(msgid, &msg, sizeof(msg.msg_text), 1, 0) == -1)
+    {
+        perror("msgrcv");
+        exit(1);
+    }
 
     printf("Server received: %s\n", msg.msg_text);
 
     // Send reply
     msg.msg_type = 2;
     strcpy(msg.msg_text, "Hello Client");
-msgsnd(msgid, &msg, sizeof(msg.msg_text), 0);
+
+    if (msgsnd(msgid, &msg, sizeof(msg.msg_text), 0) == -1)
+    {
+        perror("msgsnd");
+        exit(1);
+    }
 
     printf("Server sent: %s\n", msg.msg_text);
 
@@ -78,7 +89,8 @@ msgsnd(msgid, &msg, sizeof(msg.msg_text), 0);
 #include <sys/msg.h>
 #include <string.h>
 
-struct message {
+struct message
+{
     long msg_type;
     char msg_text[100];
 };
@@ -91,7 +103,8 @@ int main()
 
     // Generate the same key
     key = ftok("server.c", 65);
-    / Access message queue
+
+    // Access message queue
     msgid = msgget(key, 0666);
 
     if (msgid == -1)
@@ -110,12 +123,11 @@ int main()
 
     // Receive reply
     msgrcv(msgid, &msg, sizeof(msg.msg_text), 2, 0);
-   printf("Client received: %s\n", msg.msg_text);
+
+    printf("Client received: %s\n", msg.msg_text);
 
     return 0;
 }
-
-
 
 ## OUTPUT
 
