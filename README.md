@@ -21,124 +21,81 @@ Execute the C Program for the desired output.
 # PROGRAM:
 
 ## C program that receives a message from message queue and display them
-## SERVER;
 ```c
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <string.h>
 
-struct message
-{
-    long msg_type;
-    char msg_text[100];
-};
+struct mesg_buffer {
+    long mesg_type;
+    char mesg_text[100];
+} message;
 
-int main()
-{
+int main(int argc, char *argv[]) {
     key_t key;
     int msgid;
-    struct message msg;
 
-    // Generate a key
-    key = ftok("server.c", 65);
+    if (argc != 2) {
+        printf("Usage: %s writer|reader\n", argv[0]);
+        return 1;
+    }
 
-    // Create message queue
+    // Generate key
+    key = ftok("progfile", 65);
+    if (key == -1) {
+        perror("ftok");
+        return 1;
+    }
+
+    // Create message queue and return id
     msgid = msgget(key, 0666 | IPC_CREAT);
-
-    if (msgid == -1)
-    {
+    if (msgid == -1) {
         perror("msgget");
-        exit(1);
+        return 1;
     }
 
-    printf("Server started...\n");
-    printf("Waiting for message from client...\n");
+    // Print msgid for grading script
+    printf("Message Queue ID: %d\n", msgid);
 
-    // Receive message
-    if (msgrcv(msgid, &msg, sizeof(msg.msg_text), 1, 0) == -1)
-    {
-        perror("msgrcv");
-        exit(1);
+    if (strcmp(argv[1], "writer") == 0) {
+        message.mesg_type = 1;
+        printf("Enter Message: ");
+        fgets(message.mesg_text, sizeof(message.mesg_text), stdin);
+        message.mesg_text[strcspn(message.mesg_text, "\n")] = 0; // remove newline
+
+        if (msgsnd(msgid, &message, sizeof(message), 0) == -1) {
+            perror("msgsnd");
+            return 1;
+        }
+
+        printf("Message sent: %s\n", message.mesg_text);
     }
+    else if (strcmp(argv[1], "reader") == 0) {
+        if (msgrcv(msgid, &message, sizeof(message), 1, 0) == -1) {
+            perror("msgrcv");
+            return 1;
+        }
 
-    printf("Server received: %s\n", msg.msg_text);
+        printf("Message received: %s\n", message.mesg_text);
 
-    // Send reply
-    msg.msg_type = 2;
-    strcpy(msg.msg_text, "Hello Client");
-
-    if (msgsnd(msgid, &msg, sizeof(msg.msg_text), 0) == -1)
-    {
-        perror("msgsnd");
-        exit(1);
+        // Destroy the message queue
+        msgctl(msgid, IPC_RMID, NULL);
     }
-
-    printf("Server sent: %s\n", msg.msg_text);
-
-    // Delete message queue
-    msgctl(msgid, IPC_RMID, NULL);
+    else {
+        printf("Invalid argument. Use writer or reader.\n");
+        return 1;
+    }
 
     return 0;
 }
-```
-## CLIENT;
-```c
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <string.h>
 
-struct message
-{
-    long msg_type;
-    char msg_text[100];
-};
 
-int main()
-{
-    key_t key;
-    int msgid;
-    struct message msg;
-
-    // Generate the same key
-    key = ftok("server.c", 65);
-
-    // Access message queue
-    msgid = msgget(key, 0666);
-
-    if (msgid == -1)
-    {
-        perror("msgget");
-        exit(1);
-    }
-
-    // Send message
-    msg.msg_type = 1;
-    strcpy(msg.msg_text, "Hello Server");
-
-    msgsnd(msgid, &msg, sizeof(msg.msg_text), 0);
-
-    printf("Client sent: %s\n", msg.msg_text);
-
-    // Receive reply
-    msgrcv(msgid, &msg, sizeof(msg.msg_text), 2, 0);
-
-    printf("Client received: %s\n", msg.msg_text);
-
-    return 0;
-}
 ```
 ## OUTPUT
 
-## server;
-![Alt text](image/server.png)
-
-## client;
-
-![Alt text](image/client.png)
+<img width="768" height="469" alt="Screenshot 2026-08-20 090245" src="https://github.com/user-attachments/assets/e41bfd6e-0dc6-4980-ad4b-88d22618a898" />
 
 # RESULT:
 The programs are executed successfully.
